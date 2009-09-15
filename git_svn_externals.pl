@@ -37,31 +37,42 @@ sub GitSvnCloneExternal {
 	my $ext_basename = basename($ext_path);
 	my $ext_dirname  = dirname($ext_path);
 
+	$ext_basename =~ s/%20/ /;
+	$ext_basename =~ s/\\//;
+	$ext_dirname  =~ s/%20/ /;
+	$ext_dirname  =~ s/\\//;
+
+	$ext_path =~ s/%20/ /;
+	$ext_path =~ s/\\//;
+
 	print "DBG: Dirname = [$ext_dirname], Basename = [$ext_basename]\n";
 
-	mkpath $ext_dirname unless -d $ext_dirname;
+	mkpath $ext_dirname or die "Error: $!\n" unless -d $ext_dirname;
 
-	mkpath $git_externals_dir unless -d $git_externals_dir;
+	mkpath $git_externals_dir or die "Error: $!\n" unless -d $git_externals_dir;
 
 	my $ext_full_dirname = join ("/", $git_externals_dir, $ext_dirname);
-	mkpath $ext_full_dirname unless -d $ext_full_dirname;
+	mkpath $ext_full_dirname or die "Error: $!\n" unless -d $ext_full_dirname;
 
 	my $tmp_current_working_dir = cwd();
 
-	chdir $git_externals_dir . "/" . $ext_dirname;
+	chdir $ext_full_dirname or die "Error: $!\n";
+
 	unless (-d $ext_basename) {
 		print "NFO: External directory doesn't exist\n";
 		# external directory doesn't exist
 		if ($ext_rev =~ m/^$/) {
-			qx/$clone_external_command $ext_url $ext_basename/;
+			my $command = $clone_external_command . " " . $ext_url . " " . quotemeta($ext_basename);
+			qx/$command/;
 		} else {
-			qx/$clone_external_command $ext_rev $ext_url $ext_basename/;
+			my $command = $clone_external_command . " " . $ext_rev . " " . $ext_url . " " . quotemeta($ext_basename);
+			qx/$command/;
 		}
 	} else {
 		print "NFO: External directory exists\n";
 		# directory already exists
 		my $tmp_wd = cwd();
-		chdir $ext_basename;
+		chdir $ext_basename or die "Error: $!\n";
 		my $is_git_repo = &IsGitRepository;
 		if (1 == $is_git_repo) {
 			print "NFO: External already cloned, updating\n";
@@ -80,34 +91,36 @@ sub GitSvnCloneExternal {
 				qx/$git_executable branch -f __git_ext_br $git_sha/;
 				qx/$git_executable checkout __git_ext_br/;
 			}
-			chdir $tmp_wd;
+			chdir $tmp_wd or die "Error: $!\n";
 		} else {
-			chdir $tmp_wd;
+			chdir $tmp_wd or die "Error: $!\n";
 			if ($ext_rev =~ m/^$/) {
-				qx/$clone_external_command $ext_url $ext_basename/;
+				my $command = $clone_external_command . " " . $ext_url . " " . quotemeta($ext_basename);
+				qx/$command/;
 			} else {
-				qx/$clone_external_command $ext_rev $ext_url $ext_basename/;
+				my $command = $clone_external_command . " " . $ext_rev . " " . $ext_url . " " . quotemeta($ext_basename);
+				qx/$command/;
 			}
 		}
 	}
 
 	my $tmp_ext_dir = $tmp_current_working_dir . "/" . $ext_dirname;
 	print "DBG: tmp_ext_dir = $tmp_ext_dir\n";
-	chdir $tmp_ext_dir;
+	chdir $tmp_ext_dir or die "Error: $!\n";
 	my $git_repo_root_dir = qx/git rev-parse --show-cdup/;
 	$git_repo_root_dir =~ s/\n$//;
 	my $link_to_dir = $git_repo_root_dir . $git_externals_dir . "/" . $ext_path;
 	print "DBG: Linking $link_to_dir -> $ext_basename\n";
-	qx/ln -snf $link_to_dir $ext_basename/;
+	qx/ln -snf "$link_to_dir" "$ext_basename"/;
 
 	# exclude external from current git
-	chdir $tmp_current_working_dir;
+	chdir $tmp_current_working_dir or die "Error: $!\n";
 
 	# Populate hash with possible excludes
 	my %pending_excludes = ( $git_externals_dir => 1, $ext_path => 1 );
 
-	open FILE, "<", ".git/info/exclude";
-	while (my $line = <FILE>) {
+	open GITEXCLUDE, "<", ".git/info/exclude";
+	while (my $line = <GITEXCLUDE>) {
 		if ($line =~ m/^$git_externals_dir\n$/) {
 			delete $pending_excludes{$git_externals_dir};
 		}
@@ -115,7 +128,7 @@ sub GitSvnCloneExternal {
 			delete $pending_excludes{$ext_path};
 		}
 	}
-	close FILE;
+	close GITEXCLUDE;
 
 	open (GITEXCLUDE, ">>.git/info/exclude") or die "Error: $!\n";
 	for my $exclude (keys %pending_excludes) {
@@ -124,10 +137,11 @@ sub GitSvnCloneExternal {
 	close GITEXCLUDE;
 
 	# recursive check for externals
-	chdir $tmp_current_working_dir."/".$git_externals_dir."/".$ext_dirname."/".$ext_basename;
+	my $external_working_dir = $tmp_current_working_dir."/".$git_externals_dir."/".$ext_dirname."/".$ext_basename;
+	chdir $external_working_dir or die "Error: $!\n";
 	&ListGitSvnExternals();
 
-	chdir $tmp_current_working_dir;
+	chdir $tmp_current_working_dir or die "Error: $!\n";
 }
 
 sub ListGitSvnExternals {
@@ -158,6 +172,7 @@ sub ListGitSvnExternals {
 			$ext_rev  = $2;
 			$ext_url  = $3;
 			$ext_path =~ s/\///;
+			print "NFO: ==================================================\n";
 			print "NFO: External found:\n" .
 			    "   path: $ext_path\n" .
 			    "   rev : $ext_rev\n" .
@@ -168,6 +183,7 @@ sub ListGitSvnExternals {
 			$ext_path = $1;
 			$ext_url  = $2;
 			$ext_path =~ s/\///;
+			print "NFO: ==================================================\n";
 			print "NFO: External found:\n" .
 			    "   path: $ext_path\n" .
 			    "   url : $ext_url\n";
