@@ -18,7 +18,7 @@ This script can be used to clone an SVN repository with externals.
 
  Known problems
 ------------------------------------------------------------
-1. Svn externals containing spaces are not handled well
+None known.
 
  Author
 ------------------------------------------------------------
