@@ -38,13 +38,13 @@ sub GitSvnCloneExternal {
 	my $ext_basename = basename($ext_path);
 	my $ext_dirname  = dirname($ext_path);
 
-	$ext_basename =~ s/%20/ /;
-	$ext_basename =~ s/\\//;
-	$ext_dirname  =~ s/%20/ /;
-	$ext_dirname  =~ s/\\//;
+	$ext_basename =~ s/%20/ /g;
+	$ext_basename =~ s/\\//g;
+	$ext_dirname  =~ s/%20/ /g;
+	$ext_dirname  =~ s/\\//g;
 
-	$ext_path =~ s/%20/ /;
-	$ext_path =~ s/\\//;
+	$ext_path =~ s/%20/ /g;
+	$ext_path =~ s/\\//g;
 
 	print "NFO: Dirname = [$ext_dirname], Basename = [$ext_basename]\n";
 
