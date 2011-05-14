@@ -166,7 +166,7 @@ sub ListGitSvnExternals {
 	my $ext_rev;
 	my $ext_url;
 	foreach $external (@externals) {
-		if ($external =~ m/(.+)\s*(-r\s*\S+)\s((?:file:|http:|https:|svn:|svn\+ssh:)\S+.*)/) {
+		if ($external =~ m/(.+\S)\s+(-r\s*\S+)\s+((?:file:|http:|https:|svn:|svn\+ssh:)\S+.*)/) {
 			# found an external with revision specified
 			$ext_path = $1;
 			$ext_rev  = $2;
@@ -180,7 +180,7 @@ sub ListGitSvnExternals {
 			    "   rev : $ext_rev\n" .
 			    "   url : $ext_url\n";
 			&GitSvnCloneExternal ($ext_path, $ext_url, $ext_rev);
-		} elsif ($external =~ m/(.+)\s((?:file:|http:|https:|svn:|svn\+ssh:)\S+.*)/) {
+		} elsif ($external =~ m/(.+\S)\s+((?:file:|http:|https:|svn:|svn\+ssh:)\S+.*)/) {
 			# found an external without revision specified
 			$ext_path = $1;
 			$ext_url  = $2;
