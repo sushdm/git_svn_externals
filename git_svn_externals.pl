@@ -105,7 +105,7 @@ sub cloneExternal {
     my $command = join(" ", $clone_external_command, $ext_url, ".");
     qx/$command/;
 
-    if ($ext_rev != "0") {
+    if ($ext_rev ne "0") {
         switchExternalRevision($ext_rev);
     }
 
