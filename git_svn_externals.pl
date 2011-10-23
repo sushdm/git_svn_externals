@@ -60,14 +60,14 @@ sub isGitRepository {
 sub excludeExternal {
     my $directory = $_[0];
 
-    open GITEXCLUDE, "<", ".git/info/exclude" or die "gg Error: $!\n";
+    open GITEXCLUDE, "<", ".git/info/exclude" or die "Error: $!\n";
     if (grep {$_ =~ m/^$directory\n$/} <GITEXCLUDE>) {
         close GITEXCLUDE;
         return;
     }
     close GITEXCLUDE;
 
-    open GITEXCLUDE, ">>", ".git/info/exclude" or die "zz Error: $!\n";
+    open GITEXCLUDE, ">>", ".git/info/exclude" or die "Error: $!\n";
     print GITEXCLUDE "$directory\n";
     close GITEXCLUDE;
 }
