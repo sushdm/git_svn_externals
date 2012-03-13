@@ -119,7 +119,11 @@ sub makeSymlinkToExternal {
         mkpath dirname($ext_path);
     }
 
-    symlink(join("/", $git_externals_dir, $ext_path), $ext_path);
+    my $path_to_repo_root = qx/git rev-parse --show-cdup/;
+    $path_to_repo_root =~ s/\n$//;
+    my $externals_relative_dir = $path_to_repo_root . $git_externals_dir;
+
+    symlink(join("/", $externals_relative_dir, $ext_path), $ext_path);
 }
 
 sub getExternal {
